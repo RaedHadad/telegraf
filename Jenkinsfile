@@ -8,13 +8,13 @@ pipeline {
     stages {
         stage('Checkout Repo') {
             steps {
-                git branch: 'main' , url: 'https://github.com/RaedHadad/telegraf.git'
+                git branch: 'main', url: 'https://github.com/RaedHadad/telegraf.git'
             }
         }
 
         stage('Install Telegraf on EC2') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'ubuntu', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                     sh '''
                         echo "Uploading files to EC2 instance..."
                         scp -i $SSH_KEY -o StrictHostKeyChecking=no install_telegraf.sh telegraf.conf $SSH_USER@$EC2_HOST:/tmp/
