@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout Repo') {
             steps {
-                git 'https://github.com/RaedHadad/telegraf.git'
+                git branch: 'main' , url: 'https://github.com/RaedHadad/telegraf.git'
             }
         }
 
