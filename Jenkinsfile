@@ -6,20 +6,31 @@ pipeline {
     }
 
     stages {
-        stage('Test SSH Connection to EC2') {
+        stage('Checkout Repo') {
+            steps {
+                git branch: 'main', url: 'https://github.com/RaedHadad/telegraf.git'
+            }
+        }
+
+        stage('Install Telegraf on EC2') {
             steps {
                 withCredentials([sshUserPrivateKey(
-                    credentialsId: 'ec2-ssh-key',      // This must match your Jenkins SSH credential ID
+                    credentialsId: 'ec2-ssh-key',  // The ID of your private key in Jenkins credentials
                     keyFileVariable: 'SSH_KEY',
-                    usernameVariable: 'SSH_USER'
+                    usernameVariable: 'SSH_USER'   // Usually 'ubuntu'
                 )]) {
                     sh '''
-                        echo "🔐 SSH_KEY: $SSH_KEY"
-                        echo "👤 SSH_USER: $SSH_USER"
-                        echo "🌐 EC2_HOST: $EC2_HOST"
-                        
-                        echo "📡 Attempting SSH connection..."
-                        ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$EC2_HOST" "echo ✅ SSH connection from Jenkins succeeded"
+                        echo "📁 Uploading files to EC2..."
+                        scp -i $SSH_KEY -o StrictHostKeyChecking=no install_telegraf.sh telegraf.conf $SSH_USER@$EC2_HOST:/tmp/
+
+                        echo "🚀 Running installation script on EC2..."
+                        ssh -i $SSH_KEY -o StrictHostKeyChecking=no $SSH_USER@$EC2_HOST 'sudo bash /tmp/install_telegraf.sh'
+
+                        echo "🔍 Verifying Telegraf service..."
+                        ssh -i $SSH_KEY -o StrictHostKeyChecking=no $SSH_USER@$EC2_HOST 'systemctl status telegraf --no-pager'
+
+                        echo "📡 Telegraf metrics (first 10 lines)..."
+                        ssh -i $SSH_KEY -o StrictHostKeyChecking=no $SSH_USER@$EC2_HOST 'curl -s http://localhost:9273/metrics | head -n 10'
                     '''
                 }
             }
