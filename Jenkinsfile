@@ -1,8 +1,8 @@
 pipeline {
     agent any
 
-    environment {
-        EC2_HOST = "your-ec2-ip" // Replace with actual public IP or DNS
+    parameters {
+        string(name: 'EC2_HOST', defaultValue: '', description: 'Enter the EC2 public IP or DNS name')
     }
 
     stages {
